@@ -22,13 +22,13 @@ public class InitialDataDB implements CommandLineRunner {
     @Transactional(rollbackFor = SQLException.class)
     public void run(String... args) throws Exception {
         // Save initial data to the database
-        saveDoctor("John", "Doe", "Smith", "Cardiology");
-        saveDoctor("Jane", "Doe", "Johnson", "Neurology");
-        saveDoctor("Jim", "Beam", "Brown", "Pediatrics");
-
-        saveDoctorOffice(101, 1);
-        saveDoctorOffice(102, 1);
-        saveDoctorOffice(201, 2);
+//        saveDoctor("John", "Doe", "Smith", "Cardiology");
+//        saveDoctor("Jane", "Doe", "Johnson", "Neurology");
+//        saveDoctor("Jim", "Beam", "Brown", "Pediatrics");
+//
+//        saveDoctorOffice(101, 1);
+//        saveDoctorOffice(102, 1);
+//        saveDoctorOffice(201, 2);
 
     }
 

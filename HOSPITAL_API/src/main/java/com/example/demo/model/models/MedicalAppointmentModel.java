@@ -21,6 +21,8 @@ import java.time.LocalDateTime;
 @Table(name = "medical_appointments")
 public class MedicalAppointmentModel {
 
+
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -38,6 +40,10 @@ public class MedicalAppointmentModel {
 
     private String namePatient;
 
-
-
+    public MedicalAppointmentModel(DoctorOfficeModel doctorOffice, DoctorModel doctor, LocalDateTime appointmentDateTime, String namePatient) {
+        this.doctorOffice = doctorOffice;
+        this.doctor = doctor;
+        this.appointmentDateTime = appointmentDateTime;
+        this.namePatient = namePatient;
+    }
 }
