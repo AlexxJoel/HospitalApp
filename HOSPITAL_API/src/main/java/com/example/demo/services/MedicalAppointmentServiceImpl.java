@@ -76,7 +76,26 @@ public class MedicalAppointmentServiceImpl implements MedicalAppointmentService 
     @Override
     public Boolean cancelAppointmentDue(Long appointmentId) {
 
+        //check if appointmentId is null
+        if (appointmentId == null) throw new RuntimeException("Appointment id is null");
+        //get appointment by appointmentId
+        MedicalAppointmentModel medicalAppointmentModel = medicalAppointmentRepository.findById(appointmentId)
+                .orElseThrow(() -> new RuntimeException("Appointment not found"));
 
+
+        LocalDateTime nowDateTime = LocalDateTime.now();
+        //check if appointment is in the past
+        if (medicalAppointmentModel.getAppointmentDateTime().isBefore(nowDateTime)) {
+            throw new RuntimeException("Appointment is in the past, only future appointments can be cancelled");
+        }
+
+        //check if appointment is in process
+        if (medicalAppointmentModel.getAppointmentDateTime().isEqual(nowDateTime)) {
+            throw new RuntimeException("Appointment is in process, only future appointments can be cancelled");
+        }
+
+        //the future appointments can be cancelled
+        medicalAppointmentRepository.deleteById(appointmentId);
         return true;
     }
 
