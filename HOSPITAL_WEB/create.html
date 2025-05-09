@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Cita Médica</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary mb-4">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="#">Gestión de Citas</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav">
+                <li class="nav-item">
+                    <a class="nav-link " aria-current="page" href="./index.html">Ver Citas</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link active" href="./create.html">Crear Cita</a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+<div class="container mt-5">
+    <h2>Gestión de Cita Médica</h2>
+
+    <!-- NAVBAR -->
+
+
+    <form id="appointmentForm">
+        <div class="mb-3">
+            <label for="doctor" class="form-label">Seleccionar Doctor</label>
+            <select class="form-select" id="doctor" required>
+                <!-- Aquí irán los doctores disponibles -->
+            </select>
+        </div>
+        <div class="mb-3">
+            <label for="office" class="form-label">Seleccionar Oficina</label>
+            <select class="form-select" id="office" required>
+                <!-- Aquí irán las oficinas disponibles -->
+            </select>
+        </div>
+        <div class="mb-3">
+            <label for="appointmentDate" class="form-label">Fecha y Hora de la Cita</label>
+            <input type="datetime-local" class="form-control" id="appointmentDate" required>
+        </div>
+        <div class="mb-3">
+            <label for="patientName" class="form-label">Nombre del Paciente</label>
+            <input type="text" class="form-control" id="patientName" required>
+        </div>
+        <button type="submit" class="btn btn-primary">Crear Cita</button>
+    </form>
+    <div id="responseMessage" class="mt-3"></div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+<script>
+    // Datos de doctores
+    const doctors = [
+        { id: 1, name: 'John', lastName: 'Doe', motherLastName: 'Smith', specialty: 'Cardiology' },
+        { id: 2, name: 'Jane', lastName: 'Doe', motherLastName: 'Johnson', specialty: 'Neurology' },
+        { id: 3, name: 'Jim', lastName: 'Beam', motherLastName: 'Brown', specialty: 'Pediatrics' }
+    ];
+
+    // Datos de consultorios
+    const offices = [
+        { id: 1, floor: 1, officeNumber: 101 },
+        { id: 2, floor: 1, officeNumber: 102 },
+        { id: 3, floor: 2, officeNumber: 201 }
+    ];
+
+    // Función para cargar doctores y oficinas
+    function loadDoctorsAndOffices() {
+        // Cargar doctores en el selector
+        const doctorSelect = document.getElementById('doctor');
+        doctors.forEach(doctor => {
+            const option = document.createElement('option');
+            option.value = doctor.id;
+            option.textContent = `${doctor.name} ${doctor.lastName} ${doctor.motherLastName} (${doctor.specialty})`;
+            doctorSelect.appendChild(option);
+        });
+
+        // Cargar oficinas en el selector
+        const officeSelect = document.getElementById('office');
+        offices.forEach(office => {
+            const option = document.createElement('option');
+            option.value = office.officeNumber;
+            option.textContent = `Piso ${office.floor} - Consultorio ${office.officeNumber}`;
+            officeSelect.appendChild(option);
+        });
+    }
+
+    // Al enviar el formulario, hacer la petición POST para crear la cita
+    document.getElementById('appointmentForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+
+        const doctorId = document.getElementById('doctor').value;
+        const officeNumber = document.getElementById('office').value;
+        const appointmentDate = document.getElementById('appointmentDate').value;
+        const patientName = document.getElementById('patientName').value;
+
+        // Formatear la fecha al formato "dd/MM/yyyy HH:mm"
+        const formattedDate = formatDate(appointmentDate);
+
+        const payload = {
+            idDoctor: +doctorId,
+            idDoctorOffice: +officeNumber,
+            schedule: formattedDate,
+            namePatient: patientName
+        };
+
+        // Hacer la petición POST
+        fetch('http://localhost:8080/appointments', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(payload)
+        })
+            .then(response => {
+                if (response.ok) {
+                    document.getElementById('responseMessage').textContent = 'Cita creada exitosamente!';
+                    document.getElementById('responseMessage').classList.remove('text-danger');
+                    document.getElementById('responseMessage').classList.add('text-success');
+                    console.log('Cita creada:', response);
+                } else {
+                    throw new Error('Error al crear la cita');
+                }
+            })
+            .catch(error => {
+                //TODO: Manejar el error
+                document.getElementById('responseMessage').textContent = 'Hubo un error al crear la cita: ' + error.message;
+                document.getElementById('responseMessage').classList.add('text-danger');
+                console.error('Error creando cita:', error);
+            });
+    });
+
+    // Función para formatear la fecha en el formato "dd/MM/yyyy HH:mm"
+    function formatDate(dateString) {
+        const date = new Date(dateString);
+        const day = String(date.getDate()).padStart(2, '0');
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const year = date.getFullYear();
+        const hours = String(date.getHours()).padStart(2, '0');
+        const minutes = String(date.getMinutes()).padStart(2, '0');
+        return `${day}/${month}/${year} ${hours}:${minutes}`;
+    }
+
+    // Llamar a la función para cargar doctores y oficinas al cargar la página
+    window.onload = loadDoctorsAndOffices;
+</script>
+</body>
+</html>

@@ -4,6 +4,7 @@ import com.example.demo.controller.dtos.CreateAppointmentRequest;
 import com.example.demo.model.services.MedicalAppointmentService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -21,6 +22,7 @@ import java.time.format.DateTimeParseException;
 @RestController
 @RequestMapping("/appointments")
 @RequiredArgsConstructor
+@CrossOrigin(origins = "*")
 public class MedicalAppointmentController {
     private final MedicalAppointmentService medicalAppointmentService;
 

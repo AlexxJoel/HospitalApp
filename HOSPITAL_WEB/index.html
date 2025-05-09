@@ -3,125 +3,146 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestión de Cita Médica</title>
+    <title>Listado de Citas Médicas</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body>
-<div class="container mt-5">
-    <h2>Gestión de Cita Médica</h2>
-    <form id="appointmentForm">
-        <div class="mb-3">
-            <label for="doctor" class="form-label">Seleccionar Doctor</label>
-            <select class="form-select" id="doctor" required>
-                <!-- Aquí irán los doctores disponibles -->
-            </select>
+<!-- NAVBAR -->
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="#">Gestión de Citas</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav">
+                <li class="nav-item">
+                    <a class="nav-link active" aria-current="page" href="#">Ver Citas</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="./create.html">Crear Cita</a>
+                </li>
+            </ul>
         </div>
-        <div class="mb-3">
-            <label for="office" class="form-label">Seleccionar Oficina</label>
-            <select class="form-select" id="office" required>
-                <!-- Aquí irán las oficinas disponibles -->
-            </select>
+    </div>
+</nav>
+
+<!-- CONTENIDO PRINCIPAL -->
+<div class="container mt-4">
+    <h2>Listado de Citas Médicas</h2>
+
+    <form id="filterForm" class="row g-3 mb-4">
+        <div class="col-md-3">
+            <label for="filterDate" class="form-label">Fecha (YYYY-MM-DD)</label>
+            <input type="date" id="filterDate" class="form-control">
         </div>
-        <div class="mb-3">
-            <label for="appointmentDate" class="form-label">Fecha y Hora de la Cita</label>
-            <input type="datetime-local" class="form-control" id="appointmentDate" required>
+        <div class="col-md-3">
+            <label for="filterDoctor" class="form-label">ID del Doctor</label>
+            <input type="number" id="filterDoctor" class="form-control">
         </div>
-        <div class="mb-3">
-            <label for="patientName" class="form-label">Nombre del Paciente</label>
-            <input type="text" class="form-control" id="patientName" required>
+        <div class="col-md-3">
+            <label for="filterOffice" class="form-label">Número de Consultorio</label>
+            <input type="number" id="filterOffice" class="form-control">
         </div>
-        <button type="submit" class="btn btn-primary">Crear Cita</button>
+        <div class="col-md-3 d-flex align-items-end">
+            <button type="submit" class="btn btn-primary me-2">Buscar Citas</button>
+            <button type="button" id="clearFilters" class="btn btn-secondary">Limpiar</button>
+        </div>
     </form>
-    <div id="responseMessage" class="mt-3"></div>
+
+    <div id="resultsContainer">
+        <table class="table table-striped">
+            <thead>
+            <tr>
+                <th>ID Cita</th>
+                <th>Doctor</th>
+                <th>Especialidad</th>
+                <th>Consultorio</th>
+                <th>Fecha y Hora</th>
+                <th>Paciente</th>
+                <th>Acciones</th>
+            </tr>
+            </thead>
+            <tbody id="appointmentsTableBody">
+            <!-- Las citas se insertarán aquí -->
+            </tbody>
+        </table>
+    </div>
+
+    <div id="noResults" class="text-muted mt-3" style="display: none;">No se encontraron citas con los filtros aplicados.</div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-
 <script>
-    // Datos de doctores
-    const doctors = [
-        { id: 1, name: 'John', lastName: 'Doe', motherLastName: 'Smith', specialty: 'Cardiology' },
-        { id: 2, name: 'Jane', lastName: 'Doe', motherLastName: 'Johnson', specialty: 'Neurology' },
-        { id: 3, name: 'Jim', lastName: 'Beam', motherLastName: 'Brown', specialty: 'Pediatrics' }
-    ];
-
-    // Datos de consultorios
-    const offices = [
-        { id: 1, floor: 1, officeNumber: 101 },
-        { id: 2, floor: 1, officeNumber: 102 },
-        { id: 3, floor: 2, officeNumber: 201 }
-    ];
-
-    // Función para cargar doctores y oficinas
-    function loadDoctorsAndOffices() {
-        // Cargar doctores en el selector
-        const doctorSelect = document.getElementById('doctor');
-        doctors.forEach(doctor => {
-            const option = document.createElement('option');
-            option.value = doctor.id;
-            option.textContent = `${doctor.name} ${doctor.lastName} ${doctor.motherLastName} (${doctor.specialty})`;
-            doctorSelect.appendChild(option);
-        });
-
-        // Cargar oficinas en el selector
-        const officeSelect = document.getElementById('office');
-        offices.forEach(office => {
-            const option = document.createElement('option');
-            option.value = office.officeNumber;
-            option.textContent = `Piso ${office.floor} - Consultorio ${office.officeNumber}`;
-            officeSelect.appendChild(option);
-        });
-    }
-
-    // Al enviar el formulario, hacer la petición POST para crear la cita
-    document.getElementById('appointmentForm').addEventListener('submit', function(e) {
+    document.getElementById('filterForm').addEventListener('submit', function(e) {
         e.preventDefault();
 
-        const doctorId = document.getElementById('doctor').value;
-        const officeNumber = document.getElementById('office').value;
-        const appointmentDate = document.getElementById('appointmentDate').value;
-        const patientName = document.getElementById('patientName').value;
+        const date = document.getElementById('filterDate').value;
+        const doctorId = document.getElementById('filterDoctor').value;
+        const doctorOfficeNumber = document.getElementById('filterOffice').value;
 
-        // Formatear la fecha al formato "dd/MM/yyyy HH:mm"
-        const formattedDate = formatDate(appointmentDate);
+        const params = new URLSearchParams();
+        if (date) params.append('date', date);
+        if (doctorId) params.append('doctorId', doctorId);
+        if (doctorOfficeNumber) params.append('doctorOfficeNumber', doctorOfficeNumber);
 
-        const payload = {
-            idDoctor: +doctorId,
-            idDoctorOffice: +officeNumber,
-            schedule: formattedDate,
-            namePatient: patientName
-        };
+        const url = `http://localhost:8080/appointments/filters?${params.toString()}`;
 
-        // Hacer la petición POST
-        fetch('http://localhost:8080/appointments', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(payload)
-        })
+        fetch(url)
             .then(response => {
-                if (response.ok) {
-                    document.getElementById('responseMessage').textContent = 'Cita creada exitosamente!';
-                    document.getElementById('responseMessage').classList.remove('text-danger');
-                    document.getElementById('responseMessage').classList.add('text-success');
-                    console.log('Cita creada:', response);
-                } else {
-                    throw new Error('Error al crear la cita');
+                if (!response.ok) {
+                    throw new Error('Error al obtener las citas');
                 }
+                return response.json();
+            })
+            .then(data => {
+                renderAppointments(data);
             })
             .catch(error => {
-                //TODO: Manejar el error
-                document.getElementById('responseMessage').textContent = 'Hubo un error al crear la cita: ' + error.message;
-                document.getElementById('responseMessage').classList.add('text-danger');
-                console.error('Error creando cita:', error);
+                console.error(error);
+                document.getElementById('appointmentsTableBody').innerHTML = '';
+                document.getElementById('noResults').style.display = 'block';
             });
     });
 
-    // Función para formatear la fecha en el formato "dd/MM/yyyy HH:mm"
-    function formatDate(dateString) {
-        const date = new Date(dateString);
+    document.getElementById('clearFilters').addEventListener('click', function() {
+        document.getElementById('filterDate').value = '';
+        document.getElementById('filterDoctor').value = '';
+        document.getElementById('filterOffice').value = '';
+        document.getElementById('appointmentsTableBody').innerHTML = '';
+        document.getElementById('noResults').style.display = 'none';
+    });
+
+    function renderAppointments(appointments) {
+        const tableBody = document.getElementById('appointmentsTableBody');
+        tableBody.innerHTML = '';
+        document.getElementById('noResults').style.display = appointments.length === 0 ? 'block' : 'none';
+
+        appointments.forEach(app => {
+            const row = document.createElement('tr');
+
+            const doctorFullName = `${app.doctor.name} ${app.doctor.surname} ${app.doctor.lastname}`;
+            const appointmentDateTime = formatDateTime(app.appointmentDateTime);
+
+            row.innerHTML = `
+                <td>${app.id}</td>
+                <td>${doctorFullName}</td>
+                <td>${app.doctor.specialty}</td>
+                <td>Piso ${app.doctorOffice.floorNumber} - ${app.doctorOffice.officeNumber}</td>
+                <td>${appointmentDateTime}</td>
+                <td>${app.namePatient}</td>
+                <td>
+                    <button class="btn btn-sm btn-warning me-1" onclick="pendingUpdate(${app.id})">Actualizar</button>
+                    <button class="btn btn-sm btn-danger" onclick="pendingCancel(${app.id})">Cancelar</button>
+                </td>
+            `;
+
+            tableBody.appendChild(row);
+        });
+    }
+
+    function formatDateTime(dateTimeString) {
+        const date = new Date(dateTimeString);
         const day = String(date.getDate()).padStart(2, '0');
         const month = String(date.getMonth() + 1).padStart(2, '0');
         const year = date.getFullYear();
@@ -130,8 +151,13 @@
         return `${day}/${month}/${year} ${hours}:${minutes}`;
     }
 
-    // Llamar a la función para cargar doctores y oficinas al cargar la página
-    window.onload = loadDoctorsAndOffices;
+    function pendingUpdate(appointmentId) {
+        alert(`Funcionalidad de actualizar la cita (ID: ${appointmentId}) aún está pendiente.`);
+    }
+
+    function pendingCancel(appointmentId) {
+        alert(`Funcionalidad de cancelar la cita (ID: ${appointmentId}) aún está pendiente.`);
+    }
 </script>
 </body>
 </html>
